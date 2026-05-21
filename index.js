@@ -34,7 +34,7 @@ async function run() {
       res.send(result);
     });
 
-    app.use("/featured", async(req, res) => {
+    app.get("/featured", async(req, res) => {
       const result = await ideasCollection.find().limit(3).toArray();
       res.send(result)
     })
@@ -42,6 +42,15 @@ async function run() {
     app.get("/ideas/:ideaId", async(req, res) => {
       const {ideaId} = req.params;
       const result = await ideasCollection.findOne({_id: new ObjectId(ideaId)})
+      res.send(result)
+    })
+
+    app.post("/add-idea", async(req, res) => {
+      const data = req.body;
+      const result = await ideasCollection.insertOne({
+        ...data,
+        createdAt: new Date()
+      })
       res.send(result)
     })
 
