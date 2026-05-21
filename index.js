@@ -1,6 +1,6 @@
 const express = require("express");
 const dotenv = require("dotenv");
-const cors = require("cors")
+const cors = require("cors");
 dotenv.config();
 
 const app = express();
@@ -30,29 +30,53 @@ async function run() {
     const ideasCollection = db.collection("ideas");
 
     app.get("/ideas", async (req, res) => {
-      const result = await ideasCollection.find().toArray();
+      const { query } = req.query;
+      let cursor;
+      if (query) {
+        cursor = ideasCollection.find({
+          $or: [
+            {
+              ideaTitle: {
+                $regex: query,
+                $options: "i",
+              },
+            },
+            {
+              category: {
+                $regex: query,
+                $options: "i",
+              },
+            },
+          ],
+        });
+      } else {
+        cursor = ideasCollection.find();
+      }
+      const result = await cursor.toArray();
       res.send(result);
     });
 
-    app.get("/featured", async(req, res) => {
+    app.get("/featured", async (req, res) => {
       const result = await ideasCollection.find().limit(3).toArray();
-      res.send(result)
-    })
+      res.send(result);
+    });
 
-    app.get("/ideas/:ideaId", async(req, res) => {
-      const {ideaId} = req.params;
-      const result = await ideasCollection.findOne({_id: new ObjectId(ideaId)})
-      res.send(result)
-    })
+    app.get("/ideas/:ideaId", async (req, res) => {
+      const { ideaId } = req.params;
+      const result = await ideasCollection.findOne({
+        _id: new ObjectId(ideaId),
+      });
+      res.send(result);
+    });
 
-    app.post("/add-idea", async(req, res) => {
+    app.post("/add-idea", async (req, res) => {
       const data = req.body;
       const result = await ideasCollection.insertOne({
         ...data,
-        createdAt: new Date()
-      })
-      res.send(result)
-    })
+        createdAt: new Date(),
+      });
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
