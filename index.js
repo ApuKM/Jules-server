@@ -34,6 +34,11 @@ async function run() {
       res.send(result);
     });
 
+    app.use("/featured", async(req, res) => {
+      const result = await ideasCollection.find().limit(3).toArray();
+      res.send(result)
+    })
+
     app.get("/ideas/:ideaId", async(req, res) => {
       const {ideaId} = req.params;
       const result = await ideasCollection.findOne({_id: new ObjectId(ideaId)})
