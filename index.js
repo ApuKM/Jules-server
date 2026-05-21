@@ -9,7 +9,7 @@ const port = process.env.PORT;
 app.use(express.json());
 app.use(cors());
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = process.env.MONGODB_URI;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -33,6 +33,12 @@ async function run() {
       const result = await ideasCollection.find().toArray();
       res.send(result);
     });
+
+    app.get("/ideas/:ideaId", async(req, res) => {
+      const {ideaId} = req.params;
+      const result = await ideasCollection.findOne({_id: new ObjectId(ideaId)})
+      res.send(result)
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
