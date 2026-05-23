@@ -24,9 +24,9 @@ const client = new MongoClient(uri, {
 
 const verifyToken = async (req, res, next) => {
   const { authorization } = req.headers;
-    console.log(req.headers, 'from verify token');
+  // console.log(req.headers, 'from verify token');
   const token = authorization?.split(" ")[1];
-    console.log(token);
+  // console.log(token);
 
   if (!token) {
     return res.status(401).json({ message: "Unauthorize" });
@@ -53,7 +53,7 @@ async function run() {
 
     const db = client.db("jules");
     const ideasCollection = db.collection("ideas");
-    // const myIdeasCollection = db.collection("my-ideas")
+    const commentsCollection = db.collection("comments");
 
     app.get("/ideas", async (req, res) => {
       const { query } = req.query;
@@ -82,11 +82,11 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/ideas/user/:email", verifyToken,  async (req, res) => {
+    app.get("/ideas/user/:email", verifyToken, async (req, res) => {
       const { email } = req.params;
-      console.log(email)
+      // console.log(email)
       const result = await ideasCollection.find({ userEmail: email }).toArray();
-      res.send(result)
+      res.send(result);
     });
 
     app.get("/featured", async (req, res) => {
@@ -96,16 +96,35 @@ async function run() {
 
     app.get("/ideas/:ideaId", verifyToken, async (req, res) => {
       const { ideaId } = req.params;
-      console.log(ideaId)
+      // console.log(ideaId)
       const result = await ideasCollection.findOne({
-        _id: new ObjectId(ideaId)
+        _id: new ObjectId(ideaId),
       });
+      res.send(result);
+    });
+
+    app.get("/comments/:ideaId", verifyToken, async (req, res) => {
+      const { ideaId } = req.params;
+      // console.log(ideaId);
+      const result = await commentsCollection
+        .find({ideaId})
+        .toArray();
       res.send(result);
     });
 
     app.post("/add-idea", verifyToken, async (req, res) => {
       const data = req.body;
       const result = await ideasCollection.insertOne({
+        ...data,
+        createdAt: new Date(),
+      });
+      res.send(result);
+    });
+
+    app.post("/add-comment",  async (req, res) => {
+      const data = req.body;
+      console.log(data)
+      const result = await commentsCollection.insertOne({
         ...data,
         createdAt: new Date(),
       });
