@@ -1,6 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 dotenv.config();
 
 const app = express();
@@ -21,6 +22,30 @@ const client = new MongoClient(uri, {
   },
 });
 
+const verifyToken = async (req, res, next) => {
+  const { authorization } = req.headers;
+    console.log(req.headers, 'from verify token');
+  const token = authorization?.split(" ")[1];
+    console.log(token);
+
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorize" });
+  }
+
+  try {
+    const JWKS = createRemoteJWKSet(
+      new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
+    );
+    const { payload } = await jwtVerify(token, JWKS);
+    req.user = payload;
+
+    next();
+  } catch (error) {
+    console.error("Token validation failed:", error);
+    return res.status(401).json({ message: "Unauthorize" });
+  }
+};
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -28,6 +53,7 @@ async function run() {
 
     const db = client.db("jules");
     const ideasCollection = db.collection("ideas");
+    // const myIdeasCollection = db.collection("my-ideas")
 
     app.get("/ideas", async (req, res) => {
       const { query } = req.query;
@@ -56,20 +82,28 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/ideas/user/:email", verifyToken,  async (req, res) => {
+      const { email } = req.params;
+      console.log(email)
+      const result = await ideasCollection.find({ userEmail: email }).toArray();
+      res.send(result)
+    });
+
     app.get("/featured", async (req, res) => {
       const result = await ideasCollection.find().limit(3).toArray();
       res.send(result);
     });
 
-    app.get("/ideas/:ideaId", async (req, res) => {
+    app.get("/ideas/:ideaId", verifyToken, async (req, res) => {
       const { ideaId } = req.params;
+      console.log(ideaId)
       const result = await ideasCollection.findOne({
-        _id: new ObjectId(ideaId),
+        _id: new ObjectId(ideaId)
       });
       res.send(result);
     });
 
-    app.post("/add-idea", async (req, res) => {
+    app.post("/add-idea", verifyToken, async (req, res) => {
       const data = req.body;
       const result = await ideasCollection.insertOne({
         ...data,
