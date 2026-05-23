@@ -106,9 +106,7 @@ async function run() {
     app.get("/comments/:ideaId", verifyToken, async (req, res) => {
       const { ideaId } = req.params;
       // console.log(ideaId);
-      const result = await commentsCollection
-        .find({ideaId})
-        .toArray();
+      const result = await commentsCollection.find({ ideaId }).toArray();
       res.send(result);
     });
 
@@ -121,13 +119,29 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/add-comment",  async (req, res) => {
+    app.post("/add-comment", async (req, res) => {
       const data = req.body;
-      console.log(data)
+      // console.log(data)
       const result = await commentsCollection.insertOne({
         ...data,
         createdAt: new Date(),
       });
+      res.send(result);
+    });
+
+    app.patch("/comments/edit/:commentId", async (req, res) => {
+      const { commentId } = req.params;
+      // console.log(commentId)
+      const {editComment} = req.body;
+      console.log(editComment)
+      const result = await commentsCollection.updateOne(
+        {
+          _id: new ObjectId(commentId),
+        },
+        {
+          $set: { comment: editComment, updatedAt: new Date() },
+        },
+      );
       res.send(result);
     });
 
