@@ -54,6 +54,7 @@ async function run() {
     const db = client.db("jules");
     const ideasCollection = db.collection("ideas");
     const commentsCollection = db.collection("comments");
+    const usersCollection = db.collection("user");
 
     app.get("/ideas", async (req, res) => {
       const { query } = req.query;
@@ -129,11 +130,11 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/comments/edit/:commentId", async (req, res) => {
+    app.patch("/comments/edit/:commentId", verifyToken, async (req, res) => {
       const { commentId } = req.params;
       // console.log(commentId)
-      const {editComment} = req.body;
-      console.log(editComment)
+      const { editComment } = req.body;
+      // console.log(editComment)
       const result = await commentsCollection.updateOne(
         {
           _id: new ObjectId(commentId),
@@ -142,6 +143,27 @@ async function run() {
           $set: { comment: editComment, updatedAt: new Date() },
         },
       );
+      res.send(result);
+    });
+
+    app.patch("/user/edit/:userId", verifyToken, async (req, res) => {
+      const { userId } = req.params;
+      const data = req.body;
+      const result = await usersCollection.updateOne(
+        {
+          _id: new ObjectId(userId),
+        },
+        {
+          $set: { ...data, updatedAt: new Date() },
+        },
+      );
+    });
+
+    app.delete("/comments/delete/:commentId", verifyToken, async (req, res) => {
+      const { commentId } = req.params;
+      const result = await commentsCollection.deleteOne({
+        _id: new ObjectId(commentId),
+      });
       res.send(result);
     });
 
