@@ -148,7 +148,9 @@ async function run() {
 
     app.patch("/user/edit/:userId", verifyToken, async (req, res) => {
       const { userId } = req.params;
+      // console.log(userId)
       const data = req.body;
+      // console.log(data)
       const result = await usersCollection.updateOne(
         {
           _id: new ObjectId(userId),
