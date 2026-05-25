@@ -91,7 +91,7 @@ async function run() {
     });
 
     app.get("/featured", async (req, res) => {
-      const result = await ideasCollection.find().limit(3).toArray();
+      const result = await ideasCollection.find().limit(6).toArray();
       res.send(result);
     });
 
@@ -110,6 +110,13 @@ async function run() {
       const result = await commentsCollection.find({ ideaId }).toArray();
       res.send(result);
     });
+
+    app.get("/user/:userEmail/comments",verifyToken, async(req, res) => {
+      const {userEmail} = req.params;
+      console.log(userEmail)
+      const result = await commentsCollection.find({userEmail}).toArray() ;
+      res.send(result)
+    })
 
     app.post("/add-idea", verifyToken, async (req, res) => {
       const data = req.body;
